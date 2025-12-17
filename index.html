@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M.E.E.T AI // Rotation & Gesture Module</title>
+    <title>M.E.E.T // Grab & Rotate Module</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -89,8 +89,12 @@
 
         #gesture-icon { font-size: 2.5rem; filter: drop-shadow(0 0 10px #00f0ff); }
         
-        .arrow-indicator { transition: opacity 0.2s; opacity: 0.2; }
-        .arrow-indicator.active { opacity: 1; text-shadow: 0 0 10px #00f0ff; color: #fff; }
+        .arrow-indicator { 
+            transition: all 0.2s; opacity: 0.2; color: rgba(0, 240, 255, 0.5);
+        }
+        .arrow-indicator.active { 
+            opacity: 1; text-shadow: 0 0 15px #00f0ff; color: #fff; transform: scale(1.2);
+        }
     </style>
 </head>
 <body class="h-screen w-screen relative overflow-hidden" oncontextmenu="return false;">
@@ -101,8 +105,8 @@
     <!-- Init Screen -->
     <div id="init-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md">
         <div class="arc-spinner mb-8"></div>
-        <h1 class="text-5xl font-mono font-bold tracking-widest mb-2 text-cyan-400 drop-shadow-[0_0_15px_rgba(0,240,255,0.8)]">M.E.E.T AI.</h1>
-        <p class="font-mono text-cyan-700 text-sm mb-8">GESTURE ROTATION SYSTEM // ONLINE</p>
+        <h1 class="text-5xl font-mono font-bold tracking-widest mb-2 text-cyan-400 drop-shadow-[0_0_15px_rgba(0,240,255,0.8)]">M.E.E.T</h1>
+        <p class="font-mono text-cyan-700 text-sm mb-8">TACTILE INTERFACE // MK-85</p>
         <button onclick="initSystem()" class="btn-jarvis text-xl font-bold px-12 py-4">INITIALIZE</button>
         <p id="status-msg" class="text-xs text-gray-500 mt-4 font-mono">Camera access required for hand tracking.</p>
     </div>
@@ -133,7 +137,7 @@
         <!-- Main Area -->
         <div class="flex-1 flex items-center justify-between mt-8">
             
-            <!-- Shape Menu -->
+            <!-- Left Controls -->
             <nav class="flex flex-col gap-4 pointer-events-auto w-64">
                 <div class="glass-panel p-4 rounded-lg">
                     <div class="text-[10px] font-mono text-gray-400 mb-2 pl-1 tracking-wider">PROJECTION TEMPLATES</div>
@@ -145,16 +149,27 @@
                         <button class="btn-jarvis text-left text-red-400 border-red-900/50 hover:border-red-500" onclick="switchShape('explode', this)">DETONATE</button>
                     </div>
                 </div>
-                <div class="glass-panel p-4 rounded-lg">
-                    <div class="flex justify-between items-center mb-2">
-                        <div class="text-[10px] font-mono text-gray-400 tracking-wider">PARTICLE SIZE</div>
-                        <div id="size-val" class="text-[10px] font-mono text-cyan-400">0.30</div>
+
+                <!-- Sliders -->
+                <div class="glass-panel p-4 rounded-lg flex flex-col gap-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <div class="text-[10px] font-mono text-gray-400 tracking-wider">PARTICLE SIZE</div>
+                            <div id="size-val" class="text-[10px] font-mono text-cyan-400">0.30</div>
+                        </div>
+                        <input type="range" min="0.05" max="1.5" step="0.05" value="0.30" class="w-full" oninput="updateParticleSize(this.value)">
                     </div>
-                    <input type="range" min="0.05" max="1.5" step="0.05" value="0.30" class="w-full" oninput="updateParticleSize(this.value)">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <div class="text-[10px] font-mono text-gray-400 tracking-wider">ZOOM LEVEL</div>
+                            <div id="zoom-val" class="text-[10px] font-mono text-cyan-400">35</div>
+                        </div>
+                        <input id="zoom-slider" type="range" min="10" max="100" step="1" value="35" class="w-full" oninput="updateZoom(this.value)">
+                    </div>
                 </div>
             </nav>
 
-            <!-- Gesture & Rotation Feedback -->
+            <!-- Right Controls -->
             <div class="glass-panel p-6 rounded-l-xl border-r-4 border-cyan-400 w-64 text-right pointer-events-auto">
                 <div class="text-[10px] font-mono text-gray-400 mb-4 tracking-widest">COMMAND INTERFACE</div>
                 
@@ -164,11 +179,18 @@
                     <div class="text-xs text-cyan-600 font-mono mt-2" id="gesture-desc">Tracking Hand...</div>
                 </div>
 
-                <!-- Rotation Arrows -->
-                <div class="mt-6 border-t border-cyan-900 pt-4 flex justify-between items-center font-mono text-cyan-500 text-xl font-bold">
-                    <span id="arrow-left" class="arrow-indicator">&lt;&lt;&lt;</span>
-                    <span class="text-xs text-gray-500 font-normal">ROTATION</span>
-                    <span id="arrow-right" class="arrow-indicator">&gt;&gt;&gt;</span>
+                <!-- 4-Way Rotation Arrows -->
+                <div class="mt-6 border-t border-cyan-900 pt-4 flex flex-col items-center justify-center gap-1 font-mono text-cyan-500 text-xl font-bold">
+                    <div id="arrow-up" class="arrow-indicator mb-1">▲</div>
+                    <div class="flex items-center justify-between w-full px-2">
+                        <span id="arrow-left" class="arrow-indicator">◀</span>
+                        <div class="flex flex-col items-center">
+                            <span class="text-[10px] text-gray-500 font-normal">AXIS</span>
+                            <span class="text-[10px] text-gray-500 font-normal">LOCK</span>
+                        </div>
+                        <span id="arrow-right" class="arrow-indicator">▶</span>
+                    </div>
+                    <div id="arrow-down" class="arrow-indicator mt-1">▼</div>
                 </div>
             </div>
 
@@ -177,7 +199,7 @@
         <!-- Footer -->
         <footer class="text-center pointer-events-auto pb-4">
             <div class="inline-block glass-panel px-10 py-3 rounded-full border border-cyan-900 shadow-[0_0_20px_rgba(0,240,255,0.2)]">
-                <p class="text-xs font-mono text-cyan-400 tracking-[0.2em] animate-pulse">MOVE HAND LEFT/RIGHT TO ROTATE</p>
+                <p class="text-xs font-mono text-cyan-400 tracking-[0.2em] animate-pulse">PINCH & DRAG TO ROTATE // FIST TO EXPLODE</p>
             </div>
         </footer>
 
@@ -185,8 +207,8 @@
 
     <!-- Logic -->
     <script type="module">
-        import { FilesetResolver, HandLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0";
-
+        // We use dynamic imports inside initSystem to avoid top-level await/loading issues blocking the UI
+        
         // CONFIG
         const CONFIG = {
             particleCount: 3000,
@@ -198,11 +220,11 @@
         const STATE = {
             currentShape: 'sphere',
             handPos: new THREE.Vector3(0, 0, 0),
+            prevHandPos: new THREE.Vector3(0, 0, 0),
             isTracking: false,
             gesture: 'IDLE',
             targetPositions: null,
-            usingMouse: false,
-            rotationSpeed: 0.002
+            usingMouse: false
         };
 
         let scene, camera, renderer, particles, geometry, cursor;
@@ -210,7 +232,8 @@
         let handLandmarker;
         let lastVideoTime = -1;
 
-        // INIT
+        // --- GLOBAL FUNCTIONS ATTACHED TO WINDOW ---
+        
         window.initSystem = async function() {
             const btn = document.querySelector('#init-screen button');
             const statusMsg = document.getElementById('status-msg');
@@ -269,22 +292,57 @@
             if(particles && particles.material) particles.material.size = size;
         };
 
+        window.updateZoom = function(val) {
+            const zoom = parseFloat(val);
+            CONFIG.camDepth = zoom;
+            document.getElementById('zoom-val').innerText = zoom.toFixed(0);
+            if(camera) camera.position.z = zoom;
+        };
+        
+        window.switchShape = function(type, btnElement) {
+            STATE.currentShape = type;
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+            if(btnElement) btnElement.classList.add('active');
+
+            const targetPos = getShapePositions(type);
+            STATE.targetPositions = targetPos; 
+            const tweenData = { t: 0 };
+            const startPos = Float32Array.from(originalPositions);
+
+            new TWEEN.Tween(tweenData)
+                .to({ t: 1 }, 1500)
+                .easing(TWEEN.Easing.Exponential.InOut)
+                .onUpdate(() => {
+                    for(let i=0; i < CONFIG.particleCount; i++) {
+                        const idx = i * 3;
+                        originalPositions[idx] = startPos[idx] + (targetPos[idx] - startPos[idx]) * tweenData.t;
+                        originalPositions[idx+1] = startPos[idx+1] + (targetPos[idx+1] - startPos[idx+1]) * tweenData.t;
+                        originalPositions[idx+2] = startPos[idx+2] + (targetPos[idx+2] - startPos[idx+2]) * tweenData.t;
+                    }
+                })
+                .start();
+                
+            if(type === 'explode') setTimeout(() => window.switchShape('sphere', document.querySelector('nav button')), 2000);
+        };
+
+        window.addEventListener('wheel', (e) => {
+            let newZoom = CONFIG.camDepth + (e.deltaY * 0.05);
+            if (newZoom < 10) newZoom = 10;
+            if (newZoom > 100) newZoom = 100;
+            CONFIG.camDepth = newZoom;
+            if(camera) camera.position.z = newZoom;
+            document.getElementById('zoom-slider').value = newZoom;
+            document.getElementById('zoom-val').innerText = newZoom.toFixed(0);
+        });
+
+        // --- INTERNAL HELPERS ---
+
         function setupMouseFallback() {
             window.addEventListener('mousemove', (e) => {
                 STATE.isTracking = true;
-                STATE.handPos.x = (e.clientX / window.innerWidth) * 2 - 1;
-                STATE.handPos.y = -(e.clientY / window.innerHeight) * 2 + 1;
-                
-                const dist = 35; 
-                const vFOV = THREE.MathUtils.degToRad(75);
-                const height = 2 * Math.tan(vFOV / 2) * dist;
-                const width = height * (window.innerWidth / window.innerHeight);
-                
-                STATE.handPos.x *= (width / 2.5);
-                STATE.handPos.y *= (height / 2.5);
-                
-                cursor.position.copy(STATE.handPos);
-                cursor.visible = true;
+                const nx = (e.clientX / window.innerWidth) * 2 - 1;
+                const ny = -(e.clientY / window.innerHeight) * 2 + 1;
+                updateHandPosFromScreen(nx, ny);
             });
 
             window.addEventListener('mousedown', (e) => {
@@ -297,6 +355,24 @@
                 STATE.gesture = 'IDLE';
                 updateUI(STATE.gesture);
             });
+        }
+
+        function updateHandPosFromScreen(ndcX, ndcY) {
+            const dist = CONFIG.camDepth; 
+            const vFOV = THREE.MathUtils.degToRad(75);
+            const height = 2 * Math.tan(vFOV / 2) * dist;
+            const width = height * (window.innerWidth / window.innerHeight);
+            
+            // Update Previous before Current
+            STATE.prevHandPos.copy(STATE.handPos);
+            
+            STATE.handPos.x = ndcX * (width / 2.5);
+            STATE.handPos.y = ndcY * (height / 2.5);
+            
+            if(cursor) {
+                cursor.position.copy(STATE.handPos);
+                cursor.visible = true;
+            }
         }
 
         // THREE JS
@@ -379,38 +455,18 @@
             return arr;
         }
 
-        window.switchShape = function(type, btnElement) {
-            STATE.currentShape = type;
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-            if(btnElement) btnElement.classList.add('active');
-
-            const targetPos = getShapePositions(type);
-            STATE.targetPositions = targetPos; 
-            const tweenData = { t: 0 };
-            const startPos = Float32Array.from(originalPositions);
-
-            new TWEEN.Tween(tweenData)
-                .to({ t: 1 }, 1500)
-                .easing(TWEEN.Easing.Exponential.InOut)
-                .onUpdate(() => {
-                    for(let i=0; i < CONFIG.particleCount; i++) {
-                        const idx = i * 3;
-                        originalPositions[idx] = startPos[idx] + (targetPos[idx] - startPos[idx]) * tweenData.t;
-                        originalPositions[idx+1] = startPos[idx+1] + (targetPos[idx+1] - startPos[idx+1]) * tweenData.t;
-                        originalPositions[idx+2] = startPos[idx+2] + (targetPos[idx+2] - startPos[idx+2]) * tweenData.t;
-                    }
-                })
-                .start();
-                
-            if(type === 'explode') setTimeout(() => window.switchShape('sphere', document.querySelector('nav button')), 2000);
-        };
-
-        // VISION
+        // VISION (Dynamic Import)
         async function initVisionModels() {
-            const vision = await FilesetResolver.forVisionTasks(
-                "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
+            // Using dynamic import to prevent top-level await block and ensure module is loaded only when needed
+            // Also utilizing +esm to ensure correct module format from CDN
+            const vision = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/+esm");
+            const { FilesetResolver, HandLandmarker } = vision;
+            
+            const wasm = await FilesetResolver.forVisionTasks(
+                "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
             );
-            handLandmarker = await HandLandmarker.createFromOptions(vision, {
+            
+            handLandmarker = await HandLandmarker.createFromOptions(wasm, {
                 baseOptions: {
                     modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
                     delegate: "GPU"
@@ -434,20 +490,7 @@
                     
                     const ndcX = (1 - lm[8].x) * 2 - 1; 
                     const ndcY = -(lm[8].y * 2 - 1);
-                    const dist = camera.position.z;
-                    const vFOV = THREE.MathUtils.degToRad(camera.fov);
-                    const height = 2 * Math.tan(vFOV / 2) * dist;
-                    const width = height * camera.aspect;
-                    
-                    const targetX = ndcX * (width / 2.5);
-                    const targetY = ndcY * (height / 2.5);
-                    
-                    STATE.handPos.x += (targetX - STATE.handPos.x) * 0.2;
-                    STATE.handPos.y += (targetY - STATE.handPos.y) * 0.2;
-                    
-                    cursor.position.copy(STATE.handPos);
-                    cursor.visible = true;
-                    cursor.rotation.z -= 0.1;
+                    updateHandPosFromScreen(ndcX, ndcY);
 
                     detectGesture(lm);
                 } else {
@@ -481,9 +524,9 @@
             const cursorMat = cursor.material;
 
             if (gesture === 'PINCH') {
-                icon.innerText = '🤏'; text.innerText = 'GRAVITY WELL';
+                icon.innerText = '🤏'; text.innerText = 'ROTATION LOCK';
                 text.className = 'text-2xl font-bold font-mono text-yellow-400 animate-pulse';
-                desc.innerText = STATE.usingMouse ? 'Left Mouse Hold' : 'Compressing Matter...';
+                desc.innerText = STATE.usingMouse ? 'Drag to Rotate' : 'Move Hand to Rotate';
                 cursorMat.color.setHex(0xffff00);
             } else if (gesture === 'FIST') {
                 icon.innerText = '✊'; text.innerText = 'REPULSOR';
@@ -491,23 +534,26 @@
                 desc.innerText = STATE.usingMouse ? 'Right Mouse Hold' : 'Dispersing Field...';
                 cursorMat.color.setHex(0xff0000);
             } else {
-                icon.innerText = '🖐'; text.innerText = 'STABILIZED';
+                icon.innerText = '🖐'; text.innerText = 'HOVER';
                 text.className = 'text-2xl font-bold font-mono text-white';
                 desc.innerText = STATE.usingMouse ? 'Move Mouse' : 'Tracking active...';
                 cursorMat.color.setHex(0x00f0ff);
             }
         }
         
-        function updateRotationUI(dir) {
+        function updateRotationUI(dirs) {
             const left = document.getElementById('arrow-left');
             const right = document.getElementById('arrow-right');
-            if(dir === 'left') {
-                left.classList.add('active'); right.classList.remove('active');
-            } else if (dir === 'right') {
-                right.classList.add('active'); left.classList.remove('active');
-            } else {
-                left.classList.remove('active'); right.classList.remove('active');
-            }
+            const up = document.getElementById('arrow-up');
+            const down = document.getElementById('arrow-down');
+            
+            left.classList.remove('active'); right.classList.remove('active');
+            up.classList.remove('active'); down.classList.remove('active');
+            
+            if(dirs.includes('left')) left.classList.add('active');
+            if(dirs.includes('right')) right.classList.add('active');
+            if(dirs.includes('up')) up.classList.add('active');
+            if(dirs.includes('down')) down.classList.add('active');
         }
 
         // ANIMATION LOOP
@@ -518,67 +564,65 @@
 
             const positions = geometry.attributes.position.array;
             
-            // MANUAL ROTATION LOGIC
-            let rotSpeed = 0.002; // Base speed
-            if (STATE.isTracking && STATE.gesture === 'IDLE') {
-                // Map hand X position (-20 to +20 roughly) to rotation
-                const xVal = STATE.handPos.x;
-                const deadzone = 4;
-                
-                if (xVal > deadzone) {
-                    // Right side -> Rotate Right (negative Y axis often looks like right spin depending on camera)
-                    const factor = (xVal - deadzone) / 10;
-                    rotSpeed = 0.002 + (factor * 0.05);
-                    particles.rotation.y -= rotSpeed;
-                    updateRotationUI('right');
-                } else if (xVal < -deadzone) {
-                    // Left side
-                    const factor = (Math.abs(xVal) - deadzone) / 10;
-                    rotSpeed = 0.002 + (factor * 0.05);
-                    particles.rotation.y += rotSpeed; // Rotate other way
-                    updateRotationUI('left');
+            // --- ROTATION LOGIC (GRAB & DRAG) ---
+            let activeDirs = [];
+            
+            if (STATE.isTracking) {
+                if (STATE.gesture === 'PINCH') {
+                    // Calculate Delta from Previous Hand Pos
+                    const deltaX = STATE.handPos.x - STATE.prevHandPos.x;
+                    const deltaY = STATE.handPos.y - STATE.prevHandPos.y;
+                    
+                    const sensitivity = 0.05;
+                    
+                    if (Math.abs(deltaX) > 0.05 || Math.abs(deltaY) > 0.05) {
+                        particles.rotation.y += deltaX * sensitivity;
+                        particles.rotation.x -= deltaY * sensitivity; // Inverted for natural feel
+                        
+                        // UI Indicators
+                        if (deltaX > 0) activeDirs.push('right');
+                        else if (deltaX < 0) activeDirs.push('left');
+                        if (deltaY > 0) activeDirs.push('up');
+                        else if (deltaY < 0) activeDirs.push('down');
+                    }
                 } else {
-                    particles.rotation.y += 0.002;
-                    updateRotationUI('none');
+                    // Auto Rotate if Idle
+                    if(STATE.gesture === 'IDLE') {
+                        particles.rotation.y += 0.00;
+                    }
                 }
             } else {
-                if (STATE.gesture === 'PINCH') {
-                     particles.rotation.y += 0.05; // Fast spin
-                     updateRotationUI('none');
-                } else {
-                     particles.rotation.y += 0.002;
-                     updateRotationUI('none');
-                }
+                particles.rotation.y += 0.00;
             }
+            updateRotationUI(activeDirs);
 
+            // --- PHYSICS ---
             for (let i = 0; i < CONFIG.particleCount; i++) {
                 const ix = i * 3;
                 let tx = originalPositions[ix]; let ty = originalPositions[ix+1]; let tz = originalPositions[ix+2];
-                let dx = STATE.handPos.x - tx; let dy = STATE.handPos.y - ty; let dz = STATE.handPos.z - tz;
-                const distSq = dx*dx + dy*dy + dz*dz;
+                
                 let offsetX = 0, offsetY = 0, offsetZ = 0;
 
-                if (STATE.isTracking) {
-                    const dist = Math.sqrt(distSq);
-                    if (STATE.gesture === 'PINCH') {
-                        if (dist < 40) {
-                            const force = (40 - dist) / 40;
-                            offsetX = dx * force * 0.8; offsetY = dy * force * 0.8; offsetZ = dz * force * 0.8;
-                            offsetX += dy * 0.1; offsetY -= dx * 0.1;
-                        }
-                    } else if (STATE.gesture === 'FIST') {
-                        if (dist < 25) {
-                            const force = (25 - dist) * 2;
-                            offsetX = -dx * force; offsetY = -dy * force; offsetZ = -dz * force;
-                        }
-                    } else {
-                        // IDLE disturbance
-                        if (dist < 15) {
-                            const force = (15 - dist) / 15;
-                            offsetX = -dx * force * 0.2; offsetY = -dy * force * 0.2;
-                            offsetX += (Math.random()-0.5)*0.5; offsetY += (Math.random()-0.5)*0.5;
-                        }
-                    }
+                if (STATE.isTracking && STATE.gesture === 'FIST') {
+                     let dx = STATE.handPos.x - tx;
+                     let dy = STATE.handPos.y - ty;
+                     let dz = STATE.handPos.z - tz; 
+                     const distSq = dx*dx + dy*dy + dz*dz;
+                     const dist = Math.sqrt(distSq);
+                     
+                     if (dist < 25) {
+                        const force = (25 - dist) * 2;
+                        offsetX = -dx * force; offsetY = -dy * force; offsetZ = -dz * force;
+                     }
+                }
+                
+                if (STATE.gesture === 'IDLE' && STATE.isTracking) {
+                     let dx = STATE.handPos.x - tx; let dy = STATE.handPos.y - ty;
+                     const dist = Math.sqrt(dx*dx + dy*dy);
+                     if(dist < 10) {
+                         offsetX += (Math.random()-0.5)*0.5;
+                         offsetY += (Math.random()-0.5)*0.5;
+                     }
                 }
 
                 const targetX = tx - offsetX; const targetY = ty - offsetY; const targetZ = tz - offsetZ;
